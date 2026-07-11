@@ -1,0 +1,1 @@
+Letakkan 8 berkas CSV hasil DiscordChatExporter di folder ini (ALTER_LIFE, AWEKENING, Affection, hikari).

@@ -1,0 +1,27 @@
+# Lingkungan Python & cache
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Tooling internal
+.claude/
+
+# ─────────────────────────────────────────────────────────────
+# PRIVASI: JANGAN publikasikan data pesan Discord asli
+#   - datachatdiscord/: CSV mentah berisi username & isi pesan ASLI
+#   - hasil/*.csv      : data_bersih & dataset berlabel (isi pesan)
+# Aplikasi TIDAK butuh berkas ini saat berjalan (cukup model .joblib).
+# ─────────────────────────────────────────────────────────────
+datachatdiscord/*.csv
+hasil/*.csv
+
+# Naskah skripsi & catatan kerja internal (jangan publik)
+*.docx
+konteks.md
+
+# Berkas OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,91 @@
+{
+  "enam_kelas": {
+    "akurasi": 0.5567282321899736,
+    "macro_f1": 0.33811678180891036,
+    "weighted_f1": 0.63670631086084,
+    "laporan": {
+      "insult": {
+        "precision": 0.4307692307692308,
+        "recall": 0.6222222222222222,
+        "f1-score": 0.509090909090909,
+        "support": 45.0
+      },
+      "threat": {
+        "precision": 0.25,
+        "recall": 0.8,
+        "f1-score": 0.38095238095238093,
+        "support": 5.0
+      },
+      "hate_speech": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1-score": 0.0,
+        "support": 2.0
+      },
+      "harassment": {
+        "precision": 0.3157894736842105,
+        "recall": 0.6,
+        "f1-score": 0.41379310344827586,
+        "support": 10.0
+      },
+      "exclusion": {
+        "precision": 0.023809523809523808,
+        "recall": 0.4,
+        "f1-score": 0.0449438202247191,
+        "support": 5.0
+      },
+      "non_cyberbullying": {
+        "precision": 0.8952879581151832,
+        "recall": 0.5480769230769231,
+        "f1-score": 0.679920477137177,
+        "support": 312.0
+      },
+      "accuracy": 0.5567282321899736,
+      "macro avg": {
+        "precision": 0.3192760310630247,
+        "recall": 0.4950498575498575,
+        "f1-score": 0.3381167818089103,
+        "support": 379.0
+      },
+      "weighted avg": {
+        "precision": 0.80010923660275,
+        "recall": 0.5567282321899737,
+        "f1-score": 0.6367063108608401,
+        "support": 379.0
+      }
+    }
+  },
+  "biner": {
+    "akurasi": 0.8496042216358839,
+    "macro_f1": 0.6630690768438947,
+    "weighted_f1": 0.8251297522837435,
+    "laporan": {
+      "cyberbullying": {
+        "precision": 0.6666666666666666,
+        "recall": 0.29850746268656714,
+        "f1-score": 0.41237113402061853,
+        "support": 67.0
+      },
+      "non_cyberbullying": {
+        "precision": 0.8653295128939829,
+        "recall": 0.967948717948718,
+        "f1-score": 0.913767019667171,
+        "support": 312.0
+      },
+      "accuracy": 0.8496042216358839,
+      "macro avg": {
+        "precision": 0.7659980897803247,
+        "recall": 0.6332280903176426,
+        "f1-score": 0.6630690768438947,
+        "support": 379.0
+      },
+      "weighted avg": {
+        "precision": 0.8302096957508953,
+        "recall": 0.8496042216358839,
+        "f1-score": 0.8251297522837435,
+        "support": 379.0
+      }
+    },
+    "baseline": 0.8232189973614775
+  }
+}
