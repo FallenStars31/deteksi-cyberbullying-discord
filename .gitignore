@@ -18,9 +18,11 @@ env/
 datachatdiscord/*.csv
 hasil/*.csv
 
-# Naskah skripsi & catatan kerja internal (jangan publik)
+# Naskah skripsi & catatan/panduan internal (merujuk naskah privat)
 *.docx
 konteks.md
+Laporan_Perbaikan_Sistem.md
+Revisi_Naskah_Skripsi.md
 
 # Berkas OS
 .DS_Store

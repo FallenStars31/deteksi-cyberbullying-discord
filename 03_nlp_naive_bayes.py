@@ -42,7 +42,8 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
+from sklearn.model_selection import (train_test_split, GridSearchCV,
+                                     StratifiedKFold, cross_validate)
 from sklearn.metrics import (classification_report, confusion_matrix,
                              accuracy_score, f1_score, ConfusionMatrixDisplay)
 
@@ -170,6 +171,29 @@ def main():
     simpan_cm(yte2, yp2, ["cyberbullying", "non_cyberbullying"],
               "Confusion Matrix - Naive Bayes (Biner)", "confusion_matrix_biner.png")
 
+    # ---------- C. VALIDASI SILANG 5-LIPAT (estimasi lebih stabil) ----------
+    #   Seluruh data bergiliran jadi data uji -> cocok untuk data timpang/kecil,
+    #   tak mengorbankan data latih seperti split tunggal.
+    def validasi_silang(nama, y, pakai_oversampling, alpha):
+        langkah = [("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=2))]
+        if pakai_oversampling:
+            langkah.append(("ros", RandomOverSampler(random_state=SEED)))
+        langkah.append(("nb", MultinomialNB(alpha=alpha)))
+        pipe = ImbPipeline(langkah)
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
+        r = cross_validate(pipe, X_text, y, cv=cv, scoring=["accuracy", "f1_macro"])
+        a, f = r["test_accuracy"], r["test_f1_macro"]
+        print(f"  {nama:12s}: akurasi {a.mean():.4f} ± {a.std():.4f} | "
+              f"macro-F1 {f.mean():.4f} ± {f.std():.4f}")
+        return {"akurasi_mean": float(a.mean()), "akurasi_std": float(a.std()),
+                "macro_f1_mean": float(f.mean()), "macro_f1_std": float(f.std())}
+
+    print("\n" + "=" * 60)
+    print("VALIDASI SILANG 5-LIPAT (rata-rata +/- simpangan baku)")
+    print("=" * 60)
+    cv6 = validasi_silang("Enam kelas", df["label"], True, 0.1)
+    cv2 = validasi_silang("Biner", y_biner, False, 0.01)
+
     # ---- simpan metrik ke JSON agar dapat ditampilkan di antarmuka ---------
     def _rangkum(yte, yp, labels):
         return {
@@ -184,6 +208,8 @@ def main():
         "biner": _rangkum(yte2, yp2, ["cyberbullying", "non_cyberbullying"]),
     }
     metrik["biner"]["baseline"] = float(base)
+    metrik["cv_enam_kelas"] = cv6
+    metrik["cv_biner"] = cv2
     with open(os.path.join(FOLDER_OUT, "metrik.json"), "w", encoding="utf-8") as f:
         json.dump(metrik, f, indent=2, ensure_ascii=False)
     print(f"Metrik disimpan -> {os.path.join(FOLDER_OUT, 'metrik.json')}")

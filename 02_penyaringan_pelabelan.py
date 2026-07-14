@@ -64,7 +64,7 @@ def muat_lexicon_kasar() -> set:
     if not kata:
         # fallback contoh (disesuaikan domain Discord; "anjir" dsb DIBUANG karena seruan)
         kata = {"anjing", "babi", "bangsat", "kontol", "memek", "goblok",
-                "tolol", "idiot", "bego", "sampah", "yatim", "miskin"}
+                "tolol", "idiot", "bego", "sampah", "yatim", "miskin","jawa","sunda","islam","agama"}
     # buang kata seru/politik yang tidak relevan
     for buang in {"anjir", "anjay", "wkwk"}:
         kata.discard(buang)

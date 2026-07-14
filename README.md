@@ -41,15 +41,15 @@ python 03_nlp_naive_bayes.py         # -> metrik 6 kelas & biner + 2 confusion m
 streamlit run 04_antarmuka_streamlit.py  # -> antarmuka web (pilih skema: Enam Kelas / Biner)
 ```
 > Dataset final yang dipakai di skripsi sudah disertakan sebagai
-> `hasil/dataset_berlabel.csv` (1.940 pesan). Menjalankan `03` langsung akan
+> `hasil/dataset_berlabel.csv` (2.569 pesan). Menjalankan `03` langsung akan
 > mereproduksi angka BAB V.
 
 ## Ringkasan data (konsisten dengan naskah)
 - Pesan mentah (8 kanal): **71.445** → bersih: **49.584**
   (dibuang: bot/aplikasi 351, kosong 2.087, tautan/lampiran 714, emoji 4.011, duplikat 14.698)
 - Sebaran server bersih: A 46.224, B 393, C 1.991, D 976
-- Dataset berlabel final: **1.940** pesan
-  - non_cyberbullying 1.604, insult 223, harassment 52, threat 24, exclusion 28, hate_speech 9
+- Dataset berlabel final: **2.569** pesan
+  - non_cyberbullying 2.075, insult 293, harassment 73, threat 42, exclusion 46, hate_speech 40
 
 ## Pelabelan (6 kelas)
 - Kelas: `insult, threat, hate_speech, harassment, exclusion, non_cyberbullying`
@@ -63,17 +63,25 @@ streamlit run 04_antarmuka_streamlit.py  # -> antarmuka web (pilih skema: Enam K
 Cleaning → Case Folding → Tokenisasi → Normalisasi slang → Stopword Removal →
 Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 
-## Hasil pengujian (split 80:20 stratified, seed 42) — apa adanya
+## Hasil pengujian (seed 42) — apa adanya
+
+**Holdout** (split 80:20 stratified):
 | Skenario | Akurasi | macro-F1 | weighted-F1 |
 |---|---|---|---|
-| **Enam kelas** (oversampling di data latih) | 0,557 | 0,338 | 0,637 |
-| **Biner** (cyberbullying vs non, tanpa resampling) | 0,850 | 0,663 | 0,825 |
-| *baseline "selalu normal"* | *0,823* | — | — |
+| **Enam kelas** (oversampling di data latih) | 0,495 | 0,327 | 0,572 |
+| **Biner** (cyberbullying vs non, tanpa resampling) | 0,826 | 0,648 | 0,800 |
+| *baseline "selalu normal"* | *0,804* | — | — |
 
-- **Hasil utama = skema BINER** (melampaui target 75% & baseline 0,823;
-  precision cyberbullying 0,667, recall 0,299).
-- Pada enam kelas, kelas langka (hate_speech, exclusion) berkinerja rendah/0
-  karena data sangat sedikit — dilaporkan **jujur apa adanya, tanpa data sintetis**.
+**Cross-validation 5-lipat** (rata² ± simpangan baku):
+| Skenario | Akurasi | macro-F1 |
+|---|---|---|
+| **Enam kelas** | 0,532 ± 0,009 | 0,377 ± 0,028 |
+| **Biner** | 0,836 ± 0,009 | 0,685 ± 0,029 |
+
+- **Hasil utama = skema BINER** (CV 0,836 ± 0,009; di atas target 75% & baseline 0,804).
+- Setelah penyaringan 4 tahap memperkaya data, **hate_speech dari F1 0 → 0,353** dan
+  macro-F1 6-kelas naik (0,254 → 0,377 CV); akurasi turun karena data lebih seimbang.
+  Dilaporkan **jujur apa adanya, tanpa data sintetis**.
 
 ## Catatan penting (perbaikan yang sudah diterapkan)
 1. **Kebocoran data (data leakage) diperbaiki:** oversampling & TF-IDF kini
