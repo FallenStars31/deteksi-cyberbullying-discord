@@ -5,3 +5,7 @@ PySastrawi>=1.2.0
 joblib
 matplotlib
 streamlit>=1.30
+SQLAlchemy>=2.0
+psycopg2-binary>=2.9
+SQLAlchemy>=2.0
+psycopg2-binary

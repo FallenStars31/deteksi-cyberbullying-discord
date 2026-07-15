@@ -17,12 +17,24 @@ env/
 # ─────────────────────────────────────────────────────────────
 datachatdiscord/*.csv
 hasil/*.csv
+# Database lokal SQLite: BERISI pesan asli -> jangan dipublikasikan
+hasil/*.db
+
+# Secrets (kredensial database Supabase) -> JANGAN commit
+.streamlit/secrets.toml
+# Database berisi isi pesan asli -> JANGAN dipublikasikan (dibuat ulang dari data)
+hasil/*.db
+# Kredensial database (Supabase dll.) -> RAHASIA
+.streamlit/secrets.toml
 
 # Naskah skripsi & catatan/panduan internal (merujuk naskah privat)
 *.docx
 konteks.md
 Laporan_Perbaikan_Sistem.md
 Revisi_Naskah_Skripsi.md
+# Catatan pribadi (dev log & revisi naskah) — tidak dipublikasikan
+log.md
+revisi.md
 
 # Berkas OS
 .DS_Store
