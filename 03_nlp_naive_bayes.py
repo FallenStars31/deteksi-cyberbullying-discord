@@ -15,14 +15,17 @@ Urutan praproses (PERSIS BAB III - Analisa Proses):
 Model      : MultinomialNB (Multinomial Naive Bayes)
 Tuning     : alpha (Laplace smoothing) via k-fold cross-validation
 
-PENTING (perbaikan kebocoran data / data leakage):
-  Oversampling dan TF-IDF dijalankan DI DALAM pipeline sehingga hanya
-  dilakukan pada lipatan (fold) latih saat cross-validation. Ini mencegah
-  sampel hasil oversampling "bocor" ke lipatan validasi (yang sebelumnya
-  membuat skor CV tampak sangat tinggi namun menyesatkan).
+PENTING (tanpa oversampling / resampling):
+  Kedua skenario dilatih TANPA oversampling. Uji ablasi (validasi silang
+  5-lipat, konfigurasi lain identik) menunjukkan oversampling justru
+  MERUSAK model enam-kelas: menggandakan dokumen minoritas mendistorsi
+  prior & likelihood Naive Bayes sehingga model kelewat agresif menandai
+  kelas minoritas (banjir false positive). TF-IDF dijalankan DI DALAM
+  pipeline agar hanya di-fit pada lipatan latih saat cross-validation
+  (mencegah kebocoran data / data leakage).
 
 Dua skenario pengujian (sesuai BAB V):
-  A. Enam kelas   : oversampling di data latih (rasio antar-kelas ekstrem)
+  A. Enam kelas   : TANPA oversampling (oversampling menurunkan macro-F1)
   B. Biner        : cyberbullying vs non_cyberbullying, TANPA resampling
                     (rasio lebih ringan; resampling justru menurunkan presisi)
 
@@ -49,8 +52,7 @@ from sklearn.metrics import (classification_report, confusion_matrix,
 
 from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
-from imblearn.over_sampling import RandomOverSampler
-from imblearn.pipeline import Pipeline as ImbPipeline   # penting: pipeline imblearn
+from sklearn.pipeline import Pipeline   # TF-IDF di dalam pipeline (anti-kebocoran)
 
 FOLDER_OUT   = "hasil"
 FOLDER_KAMUS = "kamus"
@@ -107,17 +109,14 @@ def simpan_cm(yte, ypred, labels, judul, nama_file):
     print(f"Confusion matrix disimpan -> {os.path.join(FOLDER_OUT, nama_file)}")
 
 
-def evaluasi(nama, X_text, y, pakai_oversampling):
-    """Latih + uji satu skenario. Oversampling & TF-IDF di DALAM pipeline
-    sehingga tidak bocor saat cross-validation."""
+def evaluasi(nama, X_text, y):
+    """Latih + uji satu skenario. TANPA oversampling; TF-IDF di DALAM pipeline
+    sehingga hanya di-fit pada lipatan latih (tidak bocor saat cross-validation)."""
     Xtr, Xte, ytr, yte = train_test_split(
         X_text, y, test_size=0.20, stratify=y, random_state=SEED)
 
-    langkah = [("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=2))]
-    if pakai_oversampling:
-        langkah.append(("ros", RandomOverSampler(random_state=SEED)))
-    langkah.append(("nb", MultinomialNB()))
-    pipe = ImbPipeline(langkah)
+    pipe = Pipeline([("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=2)),
+                     ("nb", MultinomialNB())])
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
     grid = GridSearchCV(
@@ -130,7 +129,7 @@ def evaluasi(nama, X_text, y, pakai_oversampling):
     labels = [k for k in (KELAS if len(set(y)) > 2 else ["cyberbullying", "non_cyberbullying"])
               if k in set(yte)]
     print("\n" + "=" * 60)
-    print(f"SKENARIO: {nama}  (oversampling={'ya' if pakai_oversampling else 'tidak'})")
+    print(f"SKENARIO: {nama}  (tanpa oversampling)")
     print("=" * 60)
     print(f"Alpha terbaik (CV, valid): {grid.best_params_['nb__alpha']} "
           f"| f1_macro CV: {grid.best_score_:.4f}")
@@ -155,17 +154,15 @@ def main():
     df = df[df["clean"].str.strip() != ""].reset_index(drop=True)
     X_text = df["clean"]
 
-    # ---------- A. ENAM KELAS (oversampling di data latih) ----------
-    model6, yte6, yp6, lab6 = evaluasi(
-        "Enam kelas", X_text, df["label"], pakai_oversampling=True)
+    # ---------- A. ENAM KELAS (TANPA oversampling) ----------
+    model6, yte6, yp6, lab6 = evaluasi("Enam kelas", X_text, df["label"])
     simpan_cm(yte6, yp6, lab6, "Confusion Matrix - Naive Bayes (6 Kelas)",
               "confusion_matrix_6kelas.png")
 
     # ---------- B. BINER (tanpa resampling) ----------
     y_biner = df["label"].map(
         lambda k: "non_cyberbullying" if k == "non_cyberbullying" else "cyberbullying")
-    model2, yte2, yp2, lab2 = evaluasi(
-        "Biner (cyberbullying vs non)", X_text, y_biner, pakai_oversampling=False)
+    model2, yte2, yp2, lab2 = evaluasi("Biner (cyberbullying vs non)", X_text, y_biner)
     base = (yte2 == "non_cyberbullying").mean()
     print(f"Baseline 'selalu prediksi normal': {base:.4f}")
     simpan_cm(yte2, yp2, ["cyberbullying", "non_cyberbullying"],
@@ -174,12 +171,9 @@ def main():
     # ---------- C. VALIDASI SILANG 5-LIPAT (estimasi lebih stabil) ----------
     #   Seluruh data bergiliran jadi data uji -> cocok untuk data timpang/kecil,
     #   tak mengorbankan data latih seperti split tunggal.
-    def validasi_silang(nama, y, pakai_oversampling, alpha):
-        langkah = [("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=2))]
-        if pakai_oversampling:
-            langkah.append(("ros", RandomOverSampler(random_state=SEED)))
-        langkah.append(("nb", MultinomialNB(alpha=alpha)))
-        pipe = ImbPipeline(langkah)
+    def validasi_silang(nama, y, alpha):
+        pipe = Pipeline([("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=2)),
+                         ("nb", MultinomialNB(alpha=alpha))])
         cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=SEED)
         r = cross_validate(pipe, X_text, y, cv=cv, scoring=["accuracy", "f1_macro"])
         a, f = r["test_accuracy"], r["test_f1_macro"]
@@ -191,8 +185,9 @@ def main():
     print("\n" + "=" * 60)
     print("VALIDASI SILANG 5-LIPAT (rata-rata +/- simpangan baku)")
     print("=" * 60)
-    cv6 = validasi_silang("Enam kelas", df["label"], True, 0.1)
-    cv2 = validasi_silang("Biner", y_biner, False, 0.01)
+    # alpha = 0.01 untuk kedua skema (nilai terbaik hasil GridSearchCV di atas)
+    cv6 = validasi_silang("Enam kelas", df["label"], 0.01)
+    cv2 = validasi_silang("Biner", y_biner, 0.01)
 
     # ---- simpan metrik ke JSON agar dapat ditampilkan di antarmuka ---------
     def _rangkum(yte, yp, labels):
@@ -221,7 +216,8 @@ def main():
     tfidf = TfidfVectorizer(ngram_range=(1, 2), min_df=2)
     Xall = tfidf.fit_transform(X_text)
 
-    model_6kelas = MultinomialNB(alpha=0.1).fit(Xall, df["label"])
+    # alpha = 0.01 untuk kedua skema (konsisten dgn GridSearchCV & validasi silang)
+    model_6kelas = MultinomialNB(alpha=0.01).fit(Xall, df["label"])
     y_biner_all = df["label"].map(
         lambda k: "non_cyberbullying" if k == "non_cyberbullying" else "cyberbullying")
     model_biner = MultinomialNB(alpha=0.01).fit(Xall, y_biner_all)

@@ -68,27 +68,33 @@ Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 **Holdout** (split 80:20 stratified):
 | Skenario | Akurasi | macro-F1 | weighted-F1 |
 |---|---|---|---|
-| **Enam kelas** (oversampling di data latih) | 0,495 | 0,327 | 0,572 |
+| **Enam kelas** (tanpa oversampling) | 0,851 | 0,561 | 0,825 |
 | **Biner** (cyberbullying vs non, tanpa resampling) | 0,826 | 0,648 | 0,800 |
 | *baseline "selalu normal"* | *0,804* | — | — |
 
 **Cross-validation 5-lipat** (rata² ± simpangan baku):
 | Skenario | Akurasi | macro-F1 |
 |---|---|---|
-| **Enam kelas** | 0,532 ± 0,009 | 0,377 ± 0,028 |
+| **Enam kelas** | 0,832 ± 0,013 | 0,494 ± 0,056 |
 | **Biner** | 0,836 ± 0,009 | 0,685 ± 0,029 |
 
 - **Hasil utama = skema BINER** (CV 0,836 ± 0,009; di atas target 75% & baseline 0,804).
-- Setelah penyaringan 4 tahap memperkaya data, **hate_speech dari F1 0 → 0,353** dan
-  macro-F1 6-kelas naik (0,254 → 0,377 CV); akurasi turun karena data lebih seimbang.
-  Dilaporkan **jujur apa adanya, tanpa data sintetis**.
+- **Oversampling dihapus** dari kedua skema. Uji ablasi (validasi silang 5-lipat)
+  menunjukkan oversampling justru menurunkan kinerja enam-kelas; tanpa oversampling
+  enam-kelas naik dari **CV akurasi 0,532 → 0,832** dan **macro-F1 0,377 → 0,494**,
+  serta holdout **akurasi 0,851 & macro-F1 0,561**. Kelas terlangka `hate_speech`
+  kini **F1 0,545** (dari 0 di versi awal). Dilaporkan **jujur apa adanya, tanpa data sintetis**.
 
 ## Catatan penting (perbaikan yang sudah diterapkan)
-1. **Kebocoran data (data leakage) diperbaiki:** oversampling & TF-IDF kini
-   dijalankan DI DALAM `imblearn.Pipeline` sehingga hanya pada lipatan latih saat
-   cross-validation. (Versi lama meng-oversample sebelum CV → skor CV palsu ~0,92.)
-2. **Skema biner tidak memakai oversampling** karena rasio lebih ringan dan
-   oversampling justru menurunkan presisi.
+1. **Oversampling dihapus dari kedua skema.** Uji ablasi (validasi silang 5-lipat,
+   konfigurasi lain identik) menunjukkan oversampling MERUSAK model enam-kelas:
+   menggandakan dokumen minoritas mendistorsi prior & likelihood Naïve Bayes → model
+   kelewat agresif menandai kelas minoritas (banjir false positive). Menghapusnya
+   menaikkan CV akurasi 0,532 → 0,832 dan macro-F1 0,377 → 0,494; skema biner memang
+   tak pernah memakai resampling.
+2. **Kebocoran data (data leakage) tetap dicegah:** TF-IDF dijalankan DI DALAM
+   `sklearn.Pipeline` sehingga hanya di-fit pada lipatan latih saat cross-validation.
+   (Versi lama meng-oversample sebelum CV → skor CV palsu ~0,92.)
 3. Angka di **naskah, README, dan output kode sudah sama**. Jika data diubah,
    jalankan ulang `03` lalu samakan kembali angka di naskah.
 
