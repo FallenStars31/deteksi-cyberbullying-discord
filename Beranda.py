@@ -1,56 +1,98 @@
 # -*- coding: utf-8 -*-
-"""Beranda.py — halaman utama (sambutan + status). Jalankan: streamlit run Beranda.py"""
-import os, sys
+"""Beranda.py — halaman utama = LAPORAN/dashboard (status data + hasil model).
+Jalankan: streamlit run Beranda.py"""
+import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import pandas as pd
 import streamlit as st
-from lib.ui import set_gaya, panduan
+from lib.ui import set_gaya
 from lib import db
+from lib.labels import NAMA_TAMPIL
 
-set_gaya("Deteksi Cyberbullying Discord",
-         "Kenali pesan yang menyakiti di chat Discord — otomatis, berbahasa Indonesia.")
+set_gaya("Deteksi Cyberbullying Discord", "Laporan sistem & hasil model")
 
-panduan("Selamat datang! 👋",
-        "Aplikasi ini membantu Anda membangun sistem pendeteksi <i>cyberbullying</i> "
-        "dari nol, cukup lewat halaman web ini — tanpa perlu paham kode. "
-        "Ikuti <b>5 langkah</b> di bawah secara berurutan. Bila baru pertama kali, "
-        "mulai dari langkah 1.")
-
-# ---- status ringkas ----
+# ============================ STATUS PEMROSESAN DATA ======================
 n_bersih = db.jumlah_baris("clean_messages")
 n_kandidat = db.jumlah_baris("candidates")
 n_label = db.jumlah_baris("labeled_data")
 ada_model = db.ada_artifact("model_biner.joblib")
 
+st.subheader("Status pemrosesan data")
 c1, c2, c3, c4 = st.columns(4)
-c1.metric("Pesan siap", f"{n_bersih:,}")
+c1.metric("Pesan siap disimpan", f"{n_bersih:,}")
 c2.metric("Perlu dicek", f"{n_kandidat:,}")
 c3.metric("Sudah dinilai", f"{n_label:,}")
 c4.metric("Model", "Siap ✅" if ada_model else "Belum")
 
-st.write("")
-st.subheader("Langkah pengerjaan")
+# ============================ DISTRIBUSI DATA BERLABEL ====================
+lab = db.muat_df("labeled_data")
+if not lab.empty and "label" in lab.columns:
+    st.subheader("Distribusi data berlabel")
+    dist = (lab["label"].value_counts()
+            .rename(index=NAMA_TAMPIL).rename_axis("Kelas").reset_index(name="Jumlah"))
+    dist["Persentase"] = (dist["Jumlah"] / dist["Jumlah"].sum() * 100).round(1).astype(str) + "%"
+    st.dataframe(dist, hide_index=True, use_container_width=True)
 
-LANGKAH = [
-    ("1", "🧹", "Bersihkan data", "Unggah file chat Discord, sistem merapikannya otomatis.",
-     "pages/1_Pembersihan.py"),
-    ("2", "🔎", "Saring pesan", "Sistem menandai pesan yang berpotensi menyakiti.",
-     "pages/2_Penyaringan.py"),
-    ("3", "🏷️", "Nilai pesan", "Anda menilai: pesan ini termasuk jenis apa? (sistem memberi saran).",
-     "pages/3_Pelabelan.py"),
-    ("4", "🤖", "Latih sistem", "Sistem belajar dari penilaian Anda. Cukup satu klik.",
-     "pages/4_Pelatihan.py"),
-    ("5", "📊", "Coba & lihat hasil", "Uji pesan baru dan lihat seberapa akurat sistemnya.",
-     "pages/5_Prediksi_dan_Evaluasi.py"),
-]
-for no, ikon, judul, ket, path in LANGKAH:
-    with st.container(border=True):
-        k1, k2 = st.columns([5, 2])
-        with k1:
-            st.markdown(f"**{ikon} Langkah {no} — {judul}**")
-            st.caption(ket)
-        with k2:
-            st.page_link(path, label="Buka", icon="➡️")
+# ============================ HASIL EVALUASI MODEL ========================
+b = db.muat_artifact("metrik.json")
+if b is None:
+    st.info("Model belum dilatih. Buka halaman **Pelatihan** untuk melatih model.")
+    st.stop()
 
-st.caption(f"Penyimpanan: {'lokal (SQLite)' if db.is_sqlite() else 'online (Supabase)'} · "
-           "6 jenis label: penghinaan, ancaman, ujaran kebencian, pelecehan, pengucilan, non-cyberbullying.")
+metrik = json.loads(b.decode("utf-8"))
+
+
+def tabel_metrik(laporan: dict) -> pd.DataFrame:
+    baris = []
+    for kelas, v in laporan.items():
+        if isinstance(v, dict) and "precision" in v:
+            baris.append({"Kelas": NAMA_TAMPIL.get(kelas, kelas),
+                          "Precision": round(v["precision"], 3),
+                          "Recall": round(v["recall"], 3),
+                          "F1-score": round(v["f1-score"], 3),
+                          "Data uji": int(v["support"])})
+    return pd.DataFrame(baris)
+
+
+st.subheader("Hasil evaluasi model")
+
+# ---- Skema Enam Kelas ----
+m = metrik["enam_kelas"]
+st.markdown("#### Skema Enam Kelas")
+k1, k2, k3 = st.columns(3)
+k1.metric("Akurasi", f"{m['akurasi']:.3f}")
+k2.metric("Macro-F1", f"{m['macro_f1']:.3f}")
+k3.metric("Weighted-F1", f"{m['weighted_f1']:.3f}")
+st.dataframe(tabel_metrik(m["laporan"]), hide_index=True, use_container_width=True)
+cm6 = db.muat_artifact("cm_6kelas.png")
+if cm6:
+    st.image(cm6, caption="Confusion Matrix — Enam Kelas", use_container_width=True)
+
+st.divider()
+
+# ---- Skema Biner ----
+m = metrik["biner"]
+st.markdown("#### Skema Biner (cyberbullying vs non-cyberbullying)")
+k1, k2, k3 = st.columns(3)
+k1.metric("Akurasi", f"{m['akurasi']:.3f}")
+k2.metric("Macro-F1", f"{m['macro_f1']:.3f}")
+k3.metric("Baseline", f"{m.get('baseline', 0):.3f}")
+st.dataframe(tabel_metrik(m["laporan"]), hide_index=True, use_container_width=True)
+cm2 = db.muat_artifact("cm_biner.png")
+if cm2:
+    st.image(cm2, caption="Confusion Matrix — Biner", use_container_width=True)
+
+# ---- Validasi silang ----
+cv6, cv2 = metrik.get("cv_enam_kelas", {}), metrik.get("cv_biner", {})
+if cv6 or cv2:
+    st.divider()
+    st.markdown("#### Validasi silang 5-lipat (rata-rata ± simpangan baku)")
+    st.dataframe(pd.DataFrame([
+        {"Skema": "Enam Kelas",
+         "Akurasi": f"{cv6.get('akurasi_mean',0):.3f} ± {cv6.get('akurasi_std',0):.3f}",
+         "Macro-F1": f"{cv6.get('macro_f1_mean',0):.3f} ± {cv6.get('macro_f1_std',0):.3f}"},
+        {"Skema": "Biner",
+         "Akurasi": f"{cv2.get('akurasi_mean',0):.3f} ± {cv2.get('akurasi_std',0):.3f}",
+         "Macro-F1": f"{cv2.get('macro_f1_mean',0):.3f} ± {cv2.get('macro_f1_std',0):.3f}"},
+    ]), hide_index=True, use_container_width=True)

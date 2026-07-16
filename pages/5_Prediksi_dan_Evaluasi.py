@@ -8,7 +8,7 @@ import streamlit as st
 from lib.ui import set_gaya, panduan, lanjut_ke, bar_probabilitas
 from lib import db
 from lib.labels import RINGKAS, NAMA_TAMPIL
-from lib.praproses import praproses, praproses_bertahap
+from lib.praproses import praproses
 
 set_gaya("Coba & Lihat Hasil", "Langkah 5 dari 5", langkah=5)
 
@@ -26,11 +26,6 @@ if tfidf is None or model_biner is None:
     st.warning("Sistem belum dilatih. Kerjakan **Langkah 4 · Latih** dulu.")
     lanjut_ke("pages/4_Pelatihan.py", "Ke Langkah 4 · Latih sistem")
     st.stop()
-
-panduan("Apa yang dilakukan di sini?",
-        "Ketik pesan apa saja di tab <b>Deteksi</b> untuk melihat tebakan sistem. "
-        "Di tab <b>Evaluasi</b> Anda bisa melihat seberapa akurat sistemnya "
-        "(untuk laporan/skripsi).")
 
 tab_deteksi, tab_eval = st.tabs(["🔍 Deteksi", "📊 Evaluasi Model"])
 
@@ -52,13 +47,6 @@ with tab_deteksi:
         st.markdown(f"### Hasil: <span style='color:{warna}'>{NAMA_TAMPIL.get(pred, pred)}</span>",
                     unsafe_allow_html=True)
         bar_probabilitas(pasangan, RINGKAS)
-
-        with st.expander("Lihat praproses NLP tahap demi tahap (untuk BAB IV)"):
-            for nama, hasil in praproses_bertahap(teks):
-                if isinstance(hasil, list):
-                    st.markdown(f"**{nama}:** `{hasil}`")
-                else:
-                    st.markdown(f"**{nama}:** `{hasil}`")
 
 # ------------------------------------------------------------- TAB 2: EVALUASI
 with tab_eval:
@@ -98,8 +86,7 @@ with tab_eval:
             st.image(cm2, caption="Confusion Matrix — Biner", use_container_width=True)
         st.dataframe(tabel(m["laporan"]), hide_index=True, use_container_width=True)
 
-        cv = metrik.get("cv_biner", {})
-        cv6 = metrik.get("cv_enam_kelas", {})
+        cv, cv6 = metrik.get("cv_biner", {}), metrik.get("cv_enam_kelas", {})
         if cv:
             st.caption(f"Validasi silang 5-lipat — 6 kelas: akurasi "
                        f"{cv6.get('akurasi_mean',0):.3f}±{cv6.get('akurasi_std',0):.3f} · "
