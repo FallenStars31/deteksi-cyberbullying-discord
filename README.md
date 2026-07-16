@@ -1,5 +1,14 @@
 # Kode Skripsi — Deteksi Cyberbullying Discord (Naïve Bayes)
 
+> **Sistem kini berupa APLIKASI WEB multi-halaman + DATABASE.**
+> Entri: `Beranda.py` (jalankan `streamlit run Beranda.py`); tahapan di `pages/`;
+> logika di `lib/`. Database: **SQLite** (default lokal), **MySQL/MariaDB via XAMPP**
+> (demo lokal — `mysql+pymysql://root@localhost:3306/cyberbullying`), atau
+> **PostgreSQL/Supabase** (online). Live: https://deteksi-cyberbullying-discord.streamlit.app
+> Label kelas kini **Bahasa Indonesia** (penghinaan, ancaman, ujaran_kebencian,
+> pelecehan, pengucilan, non_cyberbullying). Angka hasil terkini: `hasil/metrik.json`.
+> Script lama `01`–`05` & `04_antarmuka_streamlit.py` disimpan sebagai arsip metodologi.
+
 Kode ini mengikuti metodologi **BAB III–V** skripsi (Naufal Ikhsan Erman,
 Teknik Informatika, UPI YPTK Padang). Semua angka di kode, README, dan naskah
 sudah diselaraskan agar konsisten dan dapat direproduksi (seed = 42).
@@ -68,7 +77,7 @@ Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 **Holdout** (split 80:20 stratified):
 | Skenario | Akurasi | macro-F1 | weighted-F1 |
 |---|---|---|---|
-| **Enam kelas** (tanpa oversampling) | 0,851 | 0,561 | 0,825 |
+| **Enam kelas** (tanpa oversampling) | 0,826 | 0,480 | 0,798 |
 | **Biner** (cyberbullying vs non, tanpa resampling) | 0,826 | 0,648 | 0,800 |
 | *baseline "selalu normal"* | *0,804* | — | — |
 
@@ -81,9 +90,12 @@ Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 - **Hasil utama = skema BINER** (CV 0,836 ± 0,009; di atas target 75% & baseline 0,804).
 - **Oversampling dihapus** dari kedua skema. Uji ablasi (validasi silang 5-lipat)
   menunjukkan oversampling justru menurunkan kinerja enam-kelas; tanpa oversampling
-  enam-kelas naik dari **CV akurasi 0,532 → 0,832** dan **macro-F1 0,377 → 0,494**,
-  serta holdout **akurasi 0,851 & macro-F1 0,561**. Kelas terlangka `hate_speech`
-  kini **F1 0,545** (dari 0 di versi awal). Dilaporkan **jujur apa adanya, tanpa data sintetis**.
+  enam-kelas naik dari **CV akurasi 0,532 → 0,832** dan **macro-F1 0,377 → 0,494**.
+  Holdout enam-kelas (label Indonesia) kini **akurasi 0,826 & macro-F1 0,480**
+  (rincian per-kelas terkini di `hasil/metrik.json`; angka holdout enam-kelas
+  bergeser dari versi lama 0,851/0,561 karena penggantian nama label mengubah
+  pembagian acak *stratified split* — CV yang lebih stabil TIDAK berubah).
+  Dilaporkan **jujur apa adanya, tanpa data sintetis**.
 
 ## Catatan penting (perbaikan yang sudah diterapkan)
 1. **Oversampling dihapus dari kedua skema.** Uji ablasi (validasi silang 5-lipat,
