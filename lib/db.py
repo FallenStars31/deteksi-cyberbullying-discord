@@ -26,6 +26,7 @@ import datetime as _dt
 import pandas as pd
 from sqlalchemy import (create_engine, text, MetaData, Table, Column,
                         String, LargeBinary, URL)
+from sqlalchemy.dialects.mysql import LONGBLOB
 
 FOLDER_OUT = "hasil"
 _SQLITE_PATH = os.path.join(FOLDER_OUT, "app.db")
@@ -80,13 +81,16 @@ def is_sqlite() -> bool:
 
 
 _meta = MetaData()
-# LargeBinary -> otomatis jadi BLOB di SQLite & BYTEA di Postgres/Supabase
-# (portabel lintas basis data). Tabel dataframe lain dibuat oleh pandas.to_sql.
+# Kolom biner portabel lintas basis data:
+#   SQLite -> BLOB | Postgres/Supabase -> BYTEA | MySQL/MariaDB(XAMPP) -> LONGBLOB.
+# (BLOB biasa MySQL cuma 64KB; model bisa lebih besar -> wajib LONGBLOB.)
+_BLOB = LargeBinary().with_variant(LONGBLOB(), "mysql", "mariadb")
+# VARCHAR butuh panjang di MySQL -> beri String(255)/String(32).
 _artifacts = Table(
     "artifacts", _meta,
-    Column("nama", String, primary_key=True),
-    Column("data", LargeBinary),
-    Column("updated_at", String),
+    Column("nama", String(255), primary_key=True),
+    Column("data", _BLOB),
+    Column("updated_at", String(32)),
 )
 
 

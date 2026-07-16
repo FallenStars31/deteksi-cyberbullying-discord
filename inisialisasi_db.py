@@ -101,7 +101,10 @@ def main():
     print(f"biner   : akurasi {m['biner']['akurasi']:.3f} | "
           f"macro-F1 {m['biner']['macro_f1']:.3f} | baseline {m['biner']['baseline']:.3f} | "
           f"CV {m['cv_biner']['akurasi_mean']:.3f}±{m['cv_biner']['akurasi_std']:.3f}")
-    print("\nDatabase siap:", "SQLite (hasil/app.db)" if db.is_sqlite() else "Postgres/Supabase")
+    _peta = {"sqlite": "SQLite (hasil/app.db)", "mysql": "MySQL/MariaDB (XAMPP)",
+             "postgresql": "PostgreSQL (Supabase)"}
+    _nama = db.get_engine().dialect.name
+    print(f"\nDatabase siap: {_peta.get(_nama, _nama)}")
 
 
 if __name__ == "__main__":
