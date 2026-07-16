@@ -25,7 +25,7 @@ import io
 import datetime as _dt
 import pandas as pd
 from sqlalchemy import (create_engine, text, MetaData, Table, Column,
-                        String, LargeBinary)
+                        String, LargeBinary, URL)
 
 FOLDER_OUT = "hasil"
 _SQLITE_PATH = os.path.join(FOLDER_OUT, "app.db")
@@ -44,8 +44,20 @@ def _db_url() -> str:
         return os.environ["DATABASE_URL"]
     try:
         import streamlit as st  # opsional: modul ini bisa dipakai di luar Streamlit
-        if "db" in st.secrets and st.secrets["db"].get("url"):
-            return st.secrets["db"]["url"]
+        if "db" in st.secrets:
+            d = st.secrets["db"]
+            # (a) connection string utuh bila disediakan
+            if d.get("url"):
+                return d["url"]
+            # (b) komponen terpisah -> sandi ditulis APA ADANYA (mis. ada '@'),
+            #     URL.create otomatis meng-encode. Pengguna tak perlu %40.
+            if d.get("password") and d.get("host") and d.get("user"):
+                return URL.create(
+                    "postgresql+psycopg2",
+                    username=d["user"], password=d["password"],
+                    host=d["host"], port=int(d.get("port", 5432)),
+                    database=d.get("database", "postgres"),
+                ).render_as_string(hide_password=False)
     except Exception:
         pass
     os.makedirs(FOLDER_OUT, exist_ok=True)
