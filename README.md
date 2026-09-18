@@ -9,8 +9,7 @@
 > pelecehan, pengucilan, non_cyberbullying). Angka hasil terkini: `hasil/metrik.json`.
 > Script lama `01`–`05` & `04_antarmuka_streamlit.py` disimpan sebagai arsip metodologi.
 
-Kode ini mengikuti metodologi **BAB III–V** skripsi (Naufal Ikhsan Erman,
-Teknik Informatika, UPI YPTK Padang). Semua angka di kode, README, dan naskah
+Kode ini mengikuti metodologi **BAB III–V** skripsi saya. Semua angka di kode, README, dan naskah
 sudah diselaraskan agar konsisten dan dapat direproduksi (seed = 42).
 
 ## Struktur folder
