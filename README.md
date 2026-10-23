@@ -71,7 +71,7 @@ streamlit run 04_antarmuka_streamlit.py  # -> antarmuka web (pilih skema: Enam K
 Cleaning → Case Folding → Tokenisasi → Normalisasi slang → Stopword Removal →
 Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 
-## Hasil pengujian (seed 42) — apa adanya
+## Hasil pengujian (seed 42)
 
 **Holdout** (split 80:20 stratified):
 | Skenario | Akurasi | macro-F1 | weighted-F1 |
@@ -109,7 +109,7 @@ Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 3. Angka di **naskah, README, dan output kode sudah sama**. Jika data diubah,
    jalankan ulang `03` lalu samakan kembali angka di naskah.
 
-## Keterbatasan (jujur)
+## Keterbatasan
 Ketidakseimbangan data ekstrem; deteksi berbasis teks tidak menangkap perundungan
 di voice chat; automod Discord telah menyapu sebagian kata kunci eksplisit; dan
 penyaringan berbasis lexicon dapat melewatkan sindiran/sarkasme.
