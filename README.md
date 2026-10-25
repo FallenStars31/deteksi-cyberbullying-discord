@@ -9,8 +9,7 @@
 > pelecehan, pengucilan, non_cyberbullying). Angka hasil terkini: `hasil/metrik.json`.
 > Script lama `01`–`05` & `04_antarmuka_streamlit.py` disimpan sebagai arsip metodologi.
 
-Kode ini mengikuti metodologi **BAB III–V** skripsi (Naufal Ikhsan Erman,
-Teknik Informatika, UPI YPTK Padang). Semua angka di kode, README, dan naskah
+Kode ini mengikuti metodologi **BAB III–V** skripsi saya. Semua angka di kode, README, dan naskah
 sudah diselaraskan agar konsisten dan dapat direproduksi (seed = 42).
 
 ## Struktur folder
@@ -79,7 +78,7 @@ python 03_nlp_naive_bayes.py         # -> metrik 6 kelas & biner + 2 confusion m
 Cleaning → Case Folding → Tokenisasi → Normalisasi slang → Stopword Removal →
 Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 
-## Hasil pengujian (seed 42) — apa adanya
+## Hasil pengujian (seed 42)
 
 **Holdout** (split 80:20 stratified):
 | Skenario | Akurasi | macro-F1 | weighted-F1 |
@@ -117,7 +116,7 @@ Stemming (Sastrawi) → TF-IDF (n-gram 1–2, min_df=2).
 3. Angka di **naskah, README, dan output kode sudah sama**. Jika data diubah,
    jalankan ulang `03` lalu samakan kembali angka di naskah.
 
-## Keterbatasan (jujur)
+## Keterbatasan
 Ketidakseimbangan data ekstrem; deteksi berbasis teks tidak menangkap perundungan
 di voice chat; automod Discord telah menyapu sebagian kata kunci eksplisit; dan
 penyaringan berbasis lexicon dapat melewatkan sindiran/sarkasme.
