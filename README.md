@@ -16,16 +16,17 @@ sudah diselaraskan agar konsisten dan dapat direproduksi (seed = 42).
 ## Struktur folder
 ```
 proyek/
-├─ 01_pembersihan_data.py         # Pengumpulan & Pembersihan Data (Tabel 4.1)
-├─ 02_penyaringan_pelabelan.py    # Penyaringan kandidat kata kasar (tahap 1)
-├─ 02b_penyaringan_minoritas.py   # Penyaringan pola frasa kelas minoritas (tahap 2)
-├─ 03_nlp_naive_bayes.py          # Praproses NLP + Multinomial NB + evaluasi (BAB V)
-├─ 04_antarmuka_streamlit.py      # Antarmuka web 2 skema (6 kelas & biner), persis Gambar 4.10
+├─ Beranda.py                     # APLIKASI WEB — dashboard laporan (ENTRI UTAMA)
+├─ pages/                         # 5 tahap: Bersihkan→Saring→Labeli→Latih→Uji
+├─ lib/                           # logika inti (db, praproses, penyaringan, pemodelan, ui)
+├─ inisialisasi_db.py             # sekali jalan: isi database + latih model final
 ├─ requirements.txt
 ├─ pedoman_anotasi_v2.md          # Pedoman pelabelan 6 kelas (acuan anotasi)
-├─ datachatdiscord/               # 8 berkas CSV hasil DiscordChatExporter
 ├─ kamus/                         # kamus normalisasi & lexicon (lihat di bawah)
-└─ hasil/                         # output otomatis + dataset_berlabel.csv
+├─ hasil/                         # output & basis data lokal (SQLite app.db, dsb.)
+└─ (arsip metodologi — di root, TIDAK dipakai aplikasi web)
+   01_pembersihan_data.py, 02_penyaringan_pelabelan.py, 02b/02c/02d,
+   03_nlp_naive_bayes.py, 04_antarmuka_streamlit.py, 05_gabung_data_berlabel.py
 ```
 
 ## Instalasi (Python 3.9+)
@@ -39,7 +40,15 @@ pip install -r requirements.txt
 - `colloquial-indonesian-lexicon.csv` — Salsabila dkk. (2018), repo `nasalsabila/kamus-alay`
 - `abusive.csv` — Ibrohim & Budi (2019); ditambah daftar *elang* (Chan dkk., 2020)
 
-## Urutan menjalankan
+## Menjalankan aplikasi web (cara utama)
+```bat
+python inisialisasi_db.py            # sekali: isi database + latih model final
+streamlit run Beranda.py             # buka aplikasi (dashboard + 5 tahap di sidebar)
+```
+> Tanpa `inisialisasi_db.py`, aplikasi tetap jalan memakai SQLite lokal
+> `hasil/app.db` yang sudah berisi data & model.
+
+## Reproduksi dari nol via script arsip (opsional — metodologi BAB III–V)
 ```bat
 python 01_pembersihan_data.py        # -> hasil/data_bersih.csv + cetak Tabel 4.1
 python 02_penyaringan_pelabelan.py   # -> hasil/dataset_untuk_dilabeli.csv (kandidat tahap 1)
@@ -47,11 +56,9 @@ python 02b_penyaringan_minoritas.py  # -> hasil/kandidat_minoritas.csv    (kandi
 # >> Labeli MANUAL sesuai pedoman_anotasi_v2.md, gabung, simpan sebagai
 #    hasil/dataset_berlabel.csv  (kolom: msg_id, server, author_anon, teks, label)
 python 03_nlp_naive_bayes.py         # -> metrik 6 kelas & biner + 2 confusion matrix + model
-streamlit run 04_antarmuka_streamlit.py  # -> antarmuka web (pilih skema: Enam Kelas / Biner)
 ```
-> Dataset final yang dipakai di skripsi sudah disertakan sebagai
-> `hasil/dataset_berlabel.csv` (2.569 pesan). Menjalankan `03` langsung akan
-> mereproduksi angka BAB V.
+> Dataset final yang dipakai di skripsi disertakan sebagai
+> `hasil/dataset_berlabel.csv`. Menjalankan `03` langsung mereproduksi angka BAB V.
 
 ## Ringkasan data (konsisten dengan naskah)
 - Pesan mentah (8 kanal): **71.445** → bersih: **49.584**
@@ -119,14 +126,16 @@ penyaringan berbasis lexicon dapat melewatkan sindiran/sarkasme.
 Aplikasi web di-hosting gratis lewat **Streamlit Community Cloud**, yang deploy
 langsung dari repo GitHub ini.
 
-Berkas yang dipakai saat runtime: `04_antarmuka_streamlit.py` (main),
-`03_nlp_naive_bayes.py` (fungsi praproses), `requirements.txt`, `kamus/`,
-`.streamlit/config.toml`, dan model di `hasil/` (`*.joblib`, `metrik.json`,
-`confusion_matrix_*.png`). Data pesan mentah TIDAK diunggah (lihat `.gitignore`).
+Berkas yang dipakai saat runtime: `Beranda.py` (main), `pages/`, `lib/`,
+`requirements.txt`, `kamus/`, `.streamlit/config.toml`. Model & metrik dibaca dari
+**database** (tabel `artifacts`); di Streamlit Cloud pakai Postgres/Supabase lewat
+`.streamlit/secrets.toml` (contoh: `secrets.toml.example`). Data pesan mentah &
+kredensial TIDAK diunggah (lihat `.gitignore`).
 
 Langkah deploy:
 1. Buat repo GitHub (disarankan **private** — melindungi data & naskah).
 2. Push proyek ini ke repo tersebut.
 3. Buka https://share.streamlit.io → **New app** → pilih repo & branch.
-4. **Main file path:** `04_antarmuka_streamlit.py`
-5. **Deploy.** Streamlit Cloud memasang `requirements.txt` lalu menjalankan app.
+4. **Main file path:** `Beranda.py`
+5. Isi **Secrets** dengan koneksi database (`[db] url = "postgresql+psycopg2://..."`).
+6. **Deploy.** Streamlit Cloud memasang `requirements.txt` lalu menjalankan app.
